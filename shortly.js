@@ -2,7 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
-
+var session = require('express-session');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -21,23 +21,37 @@ app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
+app.use(session({secret: 'asdf'}));
+
 
 
 app.get('/', 
 function(req, res) {
-  res.render('index');
+  if(req.session.username) {
+    res.render('index')
+  } else {
+      res.redirect('login');
+    }
 });
 
 app.get('/create', 
 function(req, res) {
-  res.render('index');
+  if(req.session.username) {
+    res.render('index');
+  } else {
+    res.redirect('login')
+  }
 });
 
 app.get('/links', 
 function(req, res) {
-  Links.reset().fetch().then(function(links) {
-    res.send(200, links.models);
-  });
+  if(req.session.username) {
+    Links.reset().fetch().then(function(links) {
+      res.send(200, links.models);
+    });
+  } else {
+    res.redirect('login')
+  }
 });
 
 app.post('/links', 
@@ -77,8 +91,15 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.get('/login', 
+function(req, res) {
+  res.render('login');
+});
 
-
+app.get('/signup', 
+function(req, res) {
+  res.render('signup');
+});
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
