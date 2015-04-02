@@ -30,27 +30,29 @@ function(req, res) {
   if(req.session.username) {
     res.render('index')
   } else {
-      res.redirect('login');
+      res.redirect('/login');
     }
 });
 
 app.get('/create', 
 function(req, res) {
   if(req.session.username) {
-    res.render('index');
+    res.redirect('index');
   } else {
-    res.redirect('login')
+    res.redirect('/login')
   }
 });
 
 app.get('/links', 
 function(req, res) {
+  console.log(req.session.username)
   if(req.session.username) {
     Links.reset().fetch().then(function(links) {
       res.send(200, links.models);
     });
+    // res.render('index')
   } else {
-    res.redirect('login')
+    res.redirect('/login')
   }
 });
 
@@ -88,6 +90,55 @@ function(req, res) {
   });
 });
 
+app.post('/signup', 
+function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+  console.log(req.body)
+
+  new User({ username: username}).fetch().then(function(found) {
+    if (found) {
+      console.log('200000000');
+      res.send(201, found.attributes);
+    } else {
+       // console.log('40404040404')
+       // return res.send(404);
+        var user = new User({
+          username: username,
+          password: password
+        });
+
+        user.save().then(function(newUser) {
+          Users.add(newUser);
+          res.redirect('/login');
+        });
+     }
+  })
+});
+
+app.post('/login', 
+function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+  
+
+  new User({ username: username}).fetch().then(function(found) {
+    if (found) {
+      console.log('200000000');
+      var sess = req.session;
+      sess.username = username;
+      res.redirect('/index');
+    } else {
+        console.log('40404040404')
+       // return res.send(404);
+
+
+          res.redirect('/signup');
+    
+     }
+  })
+});
+
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
@@ -99,6 +150,11 @@ function(req, res) {
 app.get('/signup', 
 function(req, res) {
   res.render('signup');
+});
+
+app.get('/logout', 
+function(req, res) {
+  res.render('login');
 });
 
 /************************************************************/
